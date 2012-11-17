@@ -258,8 +258,8 @@ void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals,bool ndx_n)
 				glVertex3d(v->x + n->x / 400.0, v->y + n->y / 400.0, v->z + n->z / 400.0);
 				glVertex3d(v->x + n->x / maxDensity, v->y + n->y / maxDensity, v->z + n->z / maxDensity);
 			}else{
-				glVertex3d(v->x + ndx->x / 400.0, v->y + ndx->y / 400.0, v->z + ndx->z / 400.0);
-				glVertex3d(v->x + ndx->x / maxDensity, v->y + ndx->y / maxDensity, v->z + ndx->z / maxDensity);
+				glVertex3d(v->x + ndy->x / 400.0, v->y + ndy->y / 400.0, v->z + ndy->z / 400.0);
+				glVertex3d(v->x + ndy->x / maxDensity, v->y + ndy->y / maxDensity, v->z + ndy->z / maxDensity);
 			}// By scaling the length of the Vector3s by the maximum axis density, the Vector3s
 			// will get short when the mesh gets dense. This way, if you are doing displacement
 			// mapping, the Vector3 vectors will tend to get in each other's way less.

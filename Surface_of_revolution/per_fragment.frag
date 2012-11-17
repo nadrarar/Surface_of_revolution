@@ -52,35 +52,44 @@ vec4 ads( )
 		vec3 c = normalize( camera_position-Position);
 		float c_dot_n = max(dot(c, n), 0.0);
     	float c_n_theta=acos(c_dot_n);
-		float resolution=.15f;
 
 		if(length(defuse)<0.05f)
 			defuse=vec3(0.0f);
-		else if (length(defuse)<0.07f)
-			drawLine=true;
+//		else if (length(defuse)<0.07f)
+//			drawLine=true;
 		else
 			defuse=light.ld * material.kd;
 
 		if(length(specular)<0.07f)
 			specular=vec3(0.0f);
-		else if (length(specular)<0.08f)
-			drawLine=true;
+//		else if (length(specular)<0.08f)
+//			drawLine=true;
 		else
 			specular=vec3(light.ls * material.ks);
 
 		ads=vec4(ambient+defuse+specular,1.0f);
 
 		ads=vec4(vec3(mix(mix(ads.x,ads.y,.5),ads.z,.66)),1.0f);
+
+		//draw outline
+		float resolution=.15f;
+//		resolution*=
+		if((abs(abs(c_n_theta)-3.1415f/2))<resolution)
+			drawLine=true;
+		//float 
 		if(drawLine){
 			//distance from center of line, from 0-1
-			float lerp_val=(abs(abs(c_n_theta)-3.1415f/2))/resolution;
+			//float lerp_val=(abs(abs(c_n_theta)-3.1415f/2))/resolution;
 			//squared in order to make a cleaner line
-			ads=mix(ads,vec4(0.0f,0.0f,0.0f,0.0f),lerp_val);
+			//ads=mix(ads,vec4(0.0f,0.0f,0.0f,0.0f),lerp_val);
 			
 
-			//ads=vec4(0.0f,0.0f,0.0f,1.0f);
+			//ads=vec4(0.0f,0.0f,mix(length(NormalDx),length(NormalDy),sin(c_n_theta)),1.0f);
+			ads=vec4(length(NormalDx),length(NormalDy),0.0f,1.0f);
 		}		
 		//else ads=vec4(1.0f,1.0f,1.0f,0.0f);
+			
+			ads=vec4(length(NormalDx),0.0f,0.0f,1.0f);
 		
     }
 	return ads;

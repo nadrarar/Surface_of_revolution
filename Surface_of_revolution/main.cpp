@@ -226,7 +226,7 @@ int main(int argc, char * argv[])
 	}
 	MainWindowStruct mws;
 	mws.grid_size = glm::ivec2(200, 200);
-	mws.function = CosWave;
+	mws.function = Sphere;
 	mws.open = false;
 	// Each window is its own GL context. Make sure the right context is current when PostGLInitialize() is called.
 	for (map<char, Window *>::iterator iter = window_map.begin(); iter != window_map.end(); ++iter)

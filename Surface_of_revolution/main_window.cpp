@@ -33,8 +33,9 @@ void MainWindow::DisplayFunc()
 	glm::mat4 projection_matrix = glm::perspective(20.0f, ((float) this->width) / ((float) this->height), 1.0f, 10.0f);
 	//changed modelview matrix and normals so that roation is relative to the camera position
 	camera_position=glm::vec3(0.0f, 0.0f, 5.5f);
+	glm::vec3 scaleVec=glm::vec3(1.0f);
 	//glm::mat4 modelview_matrix = glm::rotate(glm::rotate(glm::lookAt(glm::vec3(0.0f, 0.0f, 5.5f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)), theta, glm::vec3(0.0f, 1.0f, 0.0f)), rho, glm::vec3(0,0,1));
-	glm::mat4 modelview_matrix = glm::rotate(glm::rotate(glm::lookAt(camera_position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),theta,glm::vec3(0,1,0)), rho, glm::vec3(raxis.x, raxis.y, raxis.z));
+	glm::mat4 modelview_matrix = glm::scale(glm::rotate(glm::rotate(glm::lookAt(camera_position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),theta,glm::vec3(0,1,0)), rho, glm::vec3(raxis.x, raxis.y, raxis.z)),scaleVec);
 	glm::mat3 normal_matrix = glm::inverse(glm::transpose(glm::mat3(modelview_matrix)));
 	glm::mat4 mvp_matrix = projection_matrix * modelview_matrix;
 
@@ -118,6 +119,7 @@ void MainWindow::DisplayFunc()
 		glScalef(0.5f, 0.5f, 0.5f);
 		this->Axes();
 		glPopMatrix();
+		glScalef(scaleVec.x,scaleVec.y,scaleVec.z);
 		this->planar_mesh->Draw(PlanarMesh::OutArray, true,this->do_cartoon_mode);
 	}
 
@@ -398,9 +400,9 @@ void MainWindow::ApplyCustomization(float (* function)(float))
 		glm::vec3 * firstNormalPointer = (this->planar_mesh->GetOutNormals() + x_density * y);
 		//calculate the normal dx, dy
 		glm::vec3 * outNormalPointerDx = (this->planar_mesh->GetOutNormalsDx() + x_density * y + 1);
-//		glm::vec3 * outNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y + 1);
+		glm::vec3 * outNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y + 1);
 		glm::vec3 * firstNormalPointerDx = (this->planar_mesh->GetOutNormalsDx() + x_density * y);
-//		glm::vec3 * firstNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y);
+		glm::vec3 * firstNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y);
 		
 
 		for (int x = 1; x < x_density; x++)
@@ -433,20 +435,29 @@ void MainWindow::ApplyCustomization(float (* function)(float))
 			}
 
 			normal = -1.0f*glm::normalize(normal);
+			//dx
+			glm::vec3 prevNormalDx=*(outNormalPointer+left);
 			if (x == x_density - 1)
 			{
 				*firstNormalPointer = normal;
-				glm::vec3 prevNormal=*(outNormalPointer+left);
-				*firstNormalPointerDx = (prevNormal-normal)*20.0f;
-				*(outNormalPointerDx-x_density+2) = (prevNormal-normal)*20.0f;
+				*firstNormalPointerDx = (prevNormalDx-normal)*20.0f;
+				*(outNormalPointerDx-x_density+2) = (prevNormalDx-normal)*20.0f;
 			}
-			glm::vec3 prevNormal=*(outNormalPointer+left);
-
-			*outNormalPointer = normal;
 			if(x!=1)
-				*outNormalPointerDx = (prevNormal-normal)*20.0f;
+				*outNormalPointerDx = (prevNormalDx-normal)*20.0f;
+			//dy
+			glm::vec3 prevNormalDy;
+			if (y == y_start){
+				prevNormalDy= normal;
+			} else{
+				prevNormalDy= *(outNormalPointer+down);
+			}
+			*outNormalPointerDy = (prevNormalDy-normal)*20.0f;
+			
+			*outNormalPointer = normal;
 			outNormalPointer++;
 			outNormalPointerDx++;
+			outNormalPointerDy++;
 			outVertexPointer++;
 		}
 	}
