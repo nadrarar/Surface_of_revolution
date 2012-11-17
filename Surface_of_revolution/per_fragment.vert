@@ -3,9 +3,13 @@
 layout (location = 0) in vec3 VertexPosition;
 layout (location = 1) in vec3 VertexNormal;
 layout (location = 2) in vec2 TexCoord;
+layout (location = 3) in vec3 VertexNormalDx;
+layout (location = 4) in vec3 VertexNormalDy;
 
 out vec3 Position;
 out vec3 Normal;
+out vec3 NormalDx;
+out vec3 NormalDy;
 out vec2 tcoord;
 
 flat out vec3 color;
@@ -58,7 +62,8 @@ vec3 ADS(vec4 eye_coords, vec3 normal)
 void main()
 {
 	tcoord = TexCoord;
-
+	NormalDx=VertexNormalDx;
+	NormalDy=VertexNormalDy;
 	if (do_flat_shading == false)
 	{
 		if (do_normal_mapping)

@@ -56,6 +56,8 @@ void PlanarMesh::AllocateMemory()
 	this->VTInArray.resize(xDensity * yDensity);
 	this->TArray.resize((xDensity - 1) * (yDensity - 1) * 2);
 	this->NInArray.resize(xDensity * yDensity);
+	this->NInArrayDx.resize(xDensity * yDensity);
+	this->NInArrayDy.resize(xDensity * yDensity);
 }
 
 void PlanarMesh::ResizeMesh(int xDensity, int yDensity, MeshStyle meshStyle)
@@ -109,6 +111,14 @@ void PlanarMesh::MakeMesh(MeshStyle meshStyle)
 			NInArray[i].x = 0.0;
 			NInArray[i].y = 0.0;
 			NInArray[i].z = 1.0;
+			
+			NInArrayDx[i].x = 0.0;
+			NInArrayDx[i].y = 0.0;
+			NInArrayDx[i].z = 1.0;
+			
+			NInArrayDy[i].x = 0.0;
+			NInArrayDy[i].y = 0.0;
+			NInArrayDy[i].z = 1.0;
 
 			VTInArray[i].s = ((float) x) / ((float) xDensity - 1);
 			VTInArray[i].t = ((float) y) / ((float) yDensity - 1);
@@ -172,6 +182,8 @@ void PlanarMesh::MakeMesh(MeshStyle meshStyle)
 	}
 
 	this->NOutArray.insert(this->NOutArray.begin(), this->NInArray.begin(), this->NInArray.end());
+	this->NOutArrayDx.insert(this->NOutArrayDx.begin(), this->NInArrayDx.begin(), this->NInArrayDx.end());
+	this->NOutArrayDy.insert(this->NOutArrayDy.begin(), this->NInArrayDy.begin(), this->NInArrayDy.end());
 	this->VTOutArray.insert(this->VTOutArray.begin(), this->VTInArray.begin(), this->VTInArray.end());
 	this->VOutArray.insert(this->VOutArray.begin(), this->VInArray.begin(), this->VInArray.end());
 }
@@ -180,7 +192,7 @@ void PlanarMesh::MakeMesh(MeshStyle meshStyle)
 // to draw. There are two arrays. The InArray should always be kept
 // pristine. The OutArray might contain new vertices after some type
 // of displacement map operation is performed by the calling code.
-void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals)
+void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals,bool ndx_n)
 {
 	// We will specify array pointers for Vector3es, Vector3s and texture
 	// coordinates. Therefore, we must enable OpenGL to process these
@@ -202,7 +214,6 @@ void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals)
 
 
 	// For debugging purposes you might wish to draw the Vector3s at each Vector3.
-
 	if (drawNormals)
 	{
 		float line_width;
@@ -217,6 +228,8 @@ void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals)
 
 		glm::vec3 * v = (whichArray == InArray) ? &VInArray[0] : &VOutArray[0];
 		glm::vec3 * n = (whichArray == InArray) ? &NInArray[0] : &NOutArray[0];
+		glm::vec3 * ndx = (whichArray == InArray) ? &NInArrayDx[0] : &NOutArrayDx[0];
+		glm::vec3 * ndy = (whichArray == InArray) ? &NInArrayDy[0] : &NOutArrayDy[0];
 
 		int maxDensity = (xDensity > yDensity) ? xDensity : yDensity;
 		maxDensity = maxDensity / 4;
@@ -232,19 +245,28 @@ void PlanarMesh::Draw(WhichArray whichArray, bool drawNormals)
 			{
 				v++;
 				n++;
+				ndx++;
+				ndy++;
+
 				continue;
 			}
 
 			if (i < xDensity)
 				glColor3d(0,1,0);
 
-			glVertex3d(v->x + n->x / 400.0, v->y + n->y / 400.0, v->z + n->z / 400.0);
-			glVertex3d(v->x + n->x / maxDensity, v->y + n->y / maxDensity, v->z + n->z / maxDensity);
-			// By scaling the length of the Vector3s by the maximum axis density, the Vector3s
+			if(ndx_n){
+				glVertex3d(v->x + n->x / 400.0, v->y + n->y / 400.0, v->z + n->z / 400.0);
+				glVertex3d(v->x + n->x / maxDensity, v->y + n->y / maxDensity, v->z + n->z / maxDensity);
+			}else{
+				glVertex3d(v->x + ndx->x / 400.0, v->y + ndx->y / 400.0, v->z + ndx->z / 400.0);
+				glVertex3d(v->x + ndx->x / maxDensity, v->y + ndx->y / maxDensity, v->z + ndx->z / maxDensity);
+			}// By scaling the length of the Vector3s by the maximum axis density, the Vector3s
 			// will get short when the mesh gets dense. This way, if you are doing displacement
 			// mapping, the Vector3 vectors will tend to get in each other's way less.
 			v++;
 			n++;
+			ndx++;
+			ndy++;
 		}
 		glEnd();
 
@@ -288,10 +310,28 @@ glm::vec3 * PlanarMesh::GetInNormals()
 {
 	return &NInArray[0];
 }
+glm::vec3 * PlanarMesh::GetInNormalsDx()
+{
+	return &NInArrayDx[0];
+}
+glm::vec3 * PlanarMesh::GetInNormalsDy()
+{
+	return &NInArrayDy[0];
+}
 
 glm::vec3 * PlanarMesh::GetOutNormals()
 {
 	return &NOutArray[0];
+}
+
+glm::vec3 * PlanarMesh::GetOutNormalsDx()
+{
+	return &NOutArrayDx[0];
+}
+
+glm::vec3 * PlanarMesh::GetOutNormalsDy()
+{
+	return &NOutArrayDy[0];
 }
 
 glm::vec2 * PlanarMesh::GetInTextureCoordinates()

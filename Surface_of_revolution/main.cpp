@@ -224,7 +224,6 @@ int main(int argc, char * argv[])
 		DeallocateWindows();
 		return 0;
 	}
-
 	MainWindowStruct mws;
 	mws.grid_size = glm::ivec2(200, 200);
 	mws.function = CosWave;

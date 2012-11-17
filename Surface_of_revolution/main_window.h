@@ -55,6 +55,8 @@ public:
 	GLuint normal_value_handle;
 	GLuint texture_coordinate_handle;
 	GLuint vertex_array_handle;
+	GLuint normal_dx_handle;
+	GLuint normal_dy_handle;
 
 	GLuint endcap_coordinate_handle;
 	GLuint endcap_normal_handle;
@@ -85,6 +87,9 @@ private:
 	void InitializeGLHandles()
 	{
 		this->vertex_array_handle = BAD_GL_VALUE;
+		this->normal_dx_handle = BAD_GL_VALUE;
+		this->normal_dy_handle = BAD_GL_VALUE;
+		
 		this->vertex_coordinate_handle = BAD_GL_VALUE;
 		this->texture_coordinate_handle = BAD_GL_VALUE;
 		this->normal_value_handle = BAD_GL_VALUE;

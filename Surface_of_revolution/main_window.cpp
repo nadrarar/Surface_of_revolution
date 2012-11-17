@@ -118,7 +118,7 @@ void MainWindow::DisplayFunc()
 		glScalef(0.5f, 0.5f, 0.5f);
 		this->Axes();
 		glPopMatrix();
-		this->planar_mesh->Draw(PlanarMesh::OutArray, true);
+		this->planar_mesh->Draw(PlanarMesh::OutArray, true,this->do_cartoon_mode);
 	}
 
 //	glDisable(GL_CULL_FACE);
@@ -188,6 +188,11 @@ void MainWindow::TakeDown()
 		glDeleteBuffers(1, &this->texture_coordinate_handle);
 	if (this->normal_value_handle != BAD_GL_VALUE)
 		glDeleteBuffers(1, &this->normal_value_handle);
+	if (this->normal_dx_handle != BAD_GL_VALUE)
+		glDeleteBuffers(1, &this->normal_dx_handle);
+	if (this->normal_dy_handle != BAD_GL_VALUE)
+		glDeleteBuffers(1, &this->normal_dy_handle);
+
 	if (this->vertex_array_handle != BAD_GL_VALUE)
 		glDeleteVertexArrays(1, &this->vertex_array_handle);
 
@@ -244,6 +249,18 @@ bool MainWindow::PostGLInitialize(void * data)
 	assert(this->normal_value_handle != BAD_GL_VALUE);
 	glBindBuffer(GL_ARRAY_BUFFER, this->normal_value_handle);
 	glBufferData(GL_ARRAY_BUFFER, this->planar_mesh->GetSizeOfArray() * sizeof(glm::vec3), this->planar_mesh->GetOutNormals(), GL_STATIC_DRAW);
+	
+	//pass in the change in normals, relative to x and y
+	glGenBuffers(1, &this->normal_dx_handle);
+	assert(this->normal_dx_handle != BAD_GL_VALUE);
+	glBindBuffer(GL_ARRAY_BUFFER, this->normal_dx_handle);
+	glBufferData(GL_ARRAY_BUFFER, this->planar_mesh->GetSizeOfArray() * sizeof(glm::vec3), this->planar_mesh->GetOutNormalsDx(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &this->normal_dy_handle);
+	assert(this->normal_dy_handle != BAD_GL_VALUE);
+	glBindBuffer(GL_ARRAY_BUFFER, this->normal_dy_handle);
+	glBufferData(GL_ARRAY_BUFFER, this->planar_mesh->GetSizeOfArray() * sizeof(glm::vec3), this->planar_mesh->GetOutNormalsDy(), GL_STATIC_DRAW);
+
 
 	glGenVertexArrays(1, &this->vertex_array_handle);
 	glBindVertexArray(this->vertex_array_handle);
@@ -251,12 +268,23 @@ bool MainWindow::PostGLInitialize(void * data)
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
+	glEnableVertexAttribArray(3);
+	glEnableVertexAttribArray(4);
+
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertex_coordinate_handle);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *) NULL);
+	
 	glBindBuffer(GL_ARRAY_BUFFER, this->normal_value_handle);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *) NULL);
+
 	glBindBuffer(GL_ARRAY_BUFFER, this->texture_coordinate_handle);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (GLubyte *) NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->normal_dy_handle);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *) NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->normal_dx_handle);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *) NULL);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -361,12 +389,19 @@ void MainWindow::ApplyCustomization(float (* function)(float))
 
 	float top_radius = (*function)(0.0f);
 	float bot_radius = (*function)(1.0f);
+	
 
 	for (int y = 0; y < y_density; y++)
 	{
 		glm::vec3 * outVertexPointer = (this->planar_mesh->GetOutArray() + x_density * y + 1);
 		glm::vec3 * outNormalPointer = (this->planar_mesh->GetOutNormals() + x_density * y + 1);
 		glm::vec3 * firstNormalPointer = (this->planar_mesh->GetOutNormals() + x_density * y);
+		//calculate the normal dx, dy
+		glm::vec3 * outNormalPointerDx = (this->planar_mesh->GetOutNormalsDx() + x_density * y + 1);
+//		glm::vec3 * outNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y + 1);
+		glm::vec3 * firstNormalPointerDx = (this->planar_mesh->GetOutNormalsDx() + x_density * y);
+//		glm::vec3 * firstNormalPointerDy = (this->planar_mesh->GetOutNormalsDy() + x_density * y);
+		
 
 		for (int x = 1; x < x_density; x++)
 		{
@@ -397,15 +432,21 @@ void MainWindow::ApplyCustomization(float (* function)(float))
 				}
 			}
 
-			normal = glm::normalize(normal);
-
+			normal = -1.0f*glm::normalize(normal);
 			if (x == x_density - 1)
 			{
-				*firstNormalPointer = -normal;
+				*firstNormalPointer = normal;
+				glm::vec3 prevNormal=*(outNormalPointer+left);
+				*firstNormalPointerDx = (prevNormal-normal)*20.0f;
+				*(outNormalPointerDx-x_density+2) = (prevNormal-normal)*20.0f;
 			}
+			glm::vec3 prevNormal=*(outNormalPointer+left);
 
-			*outNormalPointer = -normal;
+			*outNormalPointer = normal;
+			if(x!=1)
+				*outNormalPointerDx = (prevNormal-normal)*20.0f;
 			outNormalPointer++;
+			outNormalPointerDx++;
 			outVertexPointer++;
 		}
 	}
@@ -433,6 +474,7 @@ void MainWindow::DrawSkybox()
 	glTranslatef(0.0f, 0.0f, -5.5f);
 	this->skybox_container.Bind();
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
 	glScalef(3.0f, 3.0f, 3.0f);
 	glBegin(GL_QUADS);
 	glTexCoord2d(1.0 * one_quarter, 1 * one_third);
