@@ -5,6 +5,7 @@
 #include "high_resolution_timer.h"
 #include <map>
 #include "ilcontainer.h"
+//C:\Program Files %28x86%29\DevIL-1.7.8\include;C:\Program Files %28x86%29\FreeGLUT\include;C:\Program Files %28x86%29\glm-0.9.2.7;C:\Program Files %28x86%29\glew-1.7.0\include;%(AdditionalIncludeDirectories)
 
 /*	Surface of Revolution
 	Shader Support Class
